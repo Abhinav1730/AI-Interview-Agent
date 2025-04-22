@@ -1,8 +1,13 @@
 import {
+  Brain,
+  BriefcaseBusinessIcon,
   Calendar,
+  Code2Icon,
   LayoutDashboardIcon,
   List,
+  Puzzle,
   Settings,
+  User2Icon,
   WalletCards,
 } from "lucide-react";
 
@@ -31,5 +36,28 @@ export const SideBaOptions = [
     name: "Settings",
     icon: Settings,
     path: "/settings",
+  },
+];
+
+export const InterviewType = [
+  {
+    title: "Technical",
+    icon: Code2Icon,
+  },
+  {
+    title: "Behavioral",
+    icon: User2Icon,
+  },
+  {
+    title: "Experience",
+    icon: BriefcaseBusinessIcon,
+  },
+  {
+    title: "Problem Solving",
+    icon: Puzzle,
+  },
+  {
+    title: "Leadership",
+    icon: Brain,
   },
 ];

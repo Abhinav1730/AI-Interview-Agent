@@ -1,11 +1,17 @@
-import React from 'react'
+import React from "react";
+import WelcomeContainer from "./_components/WelcomeContainer";
+import CreateOptions from "./_components/CreateOptions";
+import LatestInterviewsList from "./_components/LatestInterviewsList";
 
 function Dashboard() {
   return (
     <div>
-      Dashboard
+      <WelcomeContainer />
+      <h2 className="my-3 font-semibold text-3xl mt-5">Dashboard</h2>
+      <CreateOptions />
+      <LatestInterviewsList />
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;

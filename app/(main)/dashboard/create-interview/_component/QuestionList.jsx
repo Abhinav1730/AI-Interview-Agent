@@ -4,10 +4,14 @@ import { Loader2Icon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import QuestionListContainer from "./QuestionListContainer";
+import { supabase } from "@/services/supabaseClient";
+import { useUser } from "@/app/provider";
+import { v4 as uuidv4 } from "uuid";
 
 function QuestionList({ formData }) {
   const [loading, setLoading] = useState(true);
   const [questionList, setQuestionList] = useState();
+  const { user } = useUser();
 
   useEffect(() => {
     if (formData) {
@@ -62,13 +66,25 @@ function QuestionList({ formData }) {
       }
     } catch (error) {
       console.error("API Error:", error);
-      toast("Server Error, Try Again!");
     } finally {
       setLoading(false);
     }
   };
 
-  const onFinish = () => {};
+  const onFinish = async () => {
+    const interview_id = uuidv4();
+    const { data, error } = await supabase
+      .from("interviews")
+      .insert([
+        {
+          ...formData,
+          questionList: questionList,
+          userEmail: user?.email,
+          interview_id: interview_id,
+        },
+      ])
+      .select();
+  };
 
   return (
     <div>

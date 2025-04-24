@@ -18,7 +18,7 @@ export async function POST(req) {
       apiKey: process.env.OPENROUTER_API_KEY,
     });
     const completion = await openai.chat.completions.create({
-      model: "deepseek/deepseek-r1-zero:free",
+      model: "agentica-org/deepcoder-14b-preview:free",
       messages: [{ role: "user", content: FINAL_PROMPT }],
     });
     console.log(completion.choices[0].message);

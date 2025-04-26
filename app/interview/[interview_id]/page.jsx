@@ -1,19 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Image from "next/image";
-import { Clock, Info, Video } from "lucide-react";
+import { Clock, Info, Loader2Icon, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/services/supabaseClient";
 import { toast } from "sonner";
+import { InterviewDataContext } from "@/context/InterviewDataContext";
 
 function Interview() {
   const [interviewData, setInterviewData] = useState();
   const [userWithName, setUserWithName] = useState();
   const [loading, setLoading] = useState(false);
+  const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
   const { interview_id } = useParams();
+
+  const router = useRouter();
   //console.log(interview_id)
 
   useEffect(() => {
@@ -41,6 +45,17 @@ function Interview() {
       setLoading(false);
       toast("Incorrect Interview Link");
     }
+  };
+
+  const onJoinInterview = async () => {
+    setLoading(true);
+    let { data: interviews, error } = await supabase
+      .from("interviews")
+      .select("*")
+      .eq("interview_id", interview_id);
+    setInterviewInfo({ userName: username, interviewData: interviews[0] });
+    router.push("/interview/" + interview_id + "/ongoing");
+    setLoading(false);
   };
   return (
     <div className="px-10 md:px-28 lg:px-48 xl:px-80 mt-7 ">
@@ -98,9 +113,10 @@ function Interview() {
         <Button
           className="mt-5 w-full font-bold rounded-4xl"
           disabled={!userWithName}
+          onClick={() => onJoinInterview()}
         >
           {" "}
-          <Video /> Join Interview
+          <Video /> {loading && <Loader2Icon />} Join Interview
         </Button>
       </div>
     </div>

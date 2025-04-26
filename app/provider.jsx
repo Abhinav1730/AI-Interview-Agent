@@ -44,7 +44,7 @@ function Provider({ children }) {
 
   const createOrFetchUser = async (authUser) => {
     try {
-      console.log("Authenticated user:", authUser);
+      //console.log("Authenticated user:", authUser);
 
       const { data: existingUsers, error: fetchError } = await supabase
         .from("Users")
@@ -73,10 +73,10 @@ function Provider({ children }) {
           return;
         }
 
-        console.log("Inserted user:", insertedUser);
+        //console.log("Inserted user:", insertedUser);
         setUser(insertedUser?.[0]);
       } else {
-        console.log("Fetched user from DB:", existingUsers[0]);
+        //console.log("Fetched user from DB:", existingUsers[0]);
         setUser(existingUsers[0]);
       }
     } catch (err) {

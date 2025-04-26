@@ -1,16 +1,47 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Clock, Info, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
+import { supabase } from "@/services/supabaseClient";
+import { toast } from "sonner";
 
 function Interview() {
+  const [interviewData, setInterviewData] = useState();
+  const [userWithName, setUserWithName] = useState();
+  const [loading, setLoading] = useState(false);
   const { interview_id } = useParams();
   //console.log(interview_id)
-  const GetInterviewDetails = () => {};
+
+  useEffect(() => {
+    interview_id && GetInterviewDetails();
+  }, [interview_id]);
+  const GetInterviewDetails = async () => {
+    setLoading(true);
+    try {
+      let { data: interviews, error } = await supabase
+        .from("interviews")
+        .select("jobPosition ,jobDescription, duration ,type")
+        .eq("interview_id", interview_id);
+
+      // if (error) {
+      //   console.error("Error fetching interview:", error);
+      //   return;
+      // }
+      setInterviewData(interviews[0]);
+      setLoading(false);
+      if (interviews?.length === 0) {
+        toast("Incorrect Interview Link");
+        return;
+      }
+    } catch (error) {
+      setLoading(false);
+      toast("Incorrect Interview Link");
+    }
+  };
   return (
     <div className="px-10 md:px-28 lg:px-48 xl:px-80 mt-7 ">
       <div className="flex flex-col items-center justify-center border rounded-xl bg-white p-7 lg:px-33  xl:px-52">
@@ -32,15 +63,18 @@ function Interview() {
           className="w-[320px] my-6"
         />
         <h2 className="font-semibold text-lg">
-          Full Stack Developer Interview
+          {interviewData?.jobPosition.toUpperCase()} Interview
         </h2>
         <h2 className="flex gap-2 items-center text-gray-500">
-          <Clock className="h-4 w-4 mt-3" /> 30 Minutes
+          <Clock className="h-4 w-4 mt-1" /> {interviewData?.duration}
         </h2>
 
         <div className="w-full">
           <h2>Enter your Full Name</h2>
-          <Input placeholder="e.g. Abhinav Saxena" />
+          <Input
+            placeholder="e.g. Abhinav Saxena"
+            onChange={(e) => setUserWithName(e.target.value)}
+          />
         </div>
 
         <div>
@@ -61,7 +95,10 @@ function Interview() {
           </div>
         </div>
 
-        <Button className="mt-5 w-full font-bold rounded-4xl">
+        <Button
+          className="mt-5 w-full font-bold rounded-4xl"
+          disabled={!userWithName}
+        >
           {" "}
           <Video /> Join Interview
         </Button>

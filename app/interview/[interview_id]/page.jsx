@@ -53,7 +53,7 @@ function Interview() {
       .from("interviews")
       .select("*")
       .eq("interview_id", interview_id);
-    setInterviewInfo({ userName: username, interviewData: interviews[0] });
+    setInterviewInfo({ userName: userWithName, interviewData: interviews[0] });
     router.push("/interview/" + interview_id + "/ongoing");
     setLoading(false);
   };

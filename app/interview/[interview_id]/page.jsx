@@ -14,6 +14,7 @@ function Interview() {
   const [interviewData, setInterviewData] = useState();
   const [userWithName, setUserWithName] = useState();
   const [loading, setLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState();
   const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
   const { interview_id } = useParams();
 
@@ -53,7 +54,11 @@ function Interview() {
       .from("interviews")
       .select("*")
       .eq("interview_id", interview_id);
-    setInterviewInfo({ userName: userWithName, interviewData: interviews[0] });
+    setInterviewInfo({
+      userName: userWithName,
+      interviewData: interviews[0],
+      userEmail: userEmail,
+    });
     router.push("/interview/" + interview_id + "/ongoing");
     setLoading(false);
   };
@@ -91,6 +96,13 @@ function Interview() {
             onChange={(e) => setUserWithName(e.target.value)}
           />
         </div>
+        <div className="w-full">
+          <h2>Enter your Email</h2>
+          <Input
+            placeholder="e.g. abhinav@gmail.com"
+            onChange={(e) => setUserEmail(e.target.value)}
+          />
+        </div>
 
         <div>
           <div className="bg-white flex gap-4 rounded-3xl border border-primary p-3 mt-10">
@@ -111,7 +123,7 @@ function Interview() {
         </div>
 
         <Button
-          className="mt-5 w-full font-bold rounded-4xl"
+          className="mt-5 w-full font-bold rounded-4xl cursor-pointer"
           disabled={!userWithName}
           onClick={() => onJoinInterview()}
         >

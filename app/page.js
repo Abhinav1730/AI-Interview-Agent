@@ -1,11 +1,14 @@
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+"use client"
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 
 export default function Home() {
-  return (
-    <div>
-      <h1>Abhinav</h1>
-      <Button>Abhinav</Button>
-    </div>
-  );
+  const router = useRouter()
+
+  useEffect(()=>{
+    router.replace("/auth")
+  },[router])
+  return null
 }

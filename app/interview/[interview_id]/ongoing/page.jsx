@@ -9,104 +9,121 @@ import { toast } from "sonner";
 import axios from "axios";
 import { supabase } from "@/services/supabaseClient";
 import { useParams, useRouter } from "next/navigation";
-import AlertConfirmation from "./_components/AlertConfirmation";
 
 function StartInterview() {
-  const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
+  const { interviewInfo } = useContext(InterviewDataContext);
   const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY);
   const [activeUser, setActiveUser] = useState(false);
   const [conversation, setConversation] = useState();
+  const [callEnd, setCallEnd] = useState(false);
   const { interview_id } = useParams();
   const [loading, setLoading] = useState(false);
-
   const router = useRouter();
 
   useEffect(() => {
     if (interviewInfo) {
-      interviewInfo && startCall();
+      console.log("Interview Info detected. Starting call...");
+      startCall();
     }
   }, [interviewInfo]);
 
   const startCall = async () => {
-    let questionList;
-    interviewInfo?.interviewData?.questionList.forEach(
-      (item, index) => (questionList = item?.question + "," + questionList)
-    );
-
+    console.log("Attempting to start call...");
+    
+    // TEMP: basic assistant config for debugging
     const assistantOptions = {
-      name: "AI Recruiter",
-      firstMessage: `Hi ${interviewInfo?.userName}, how are you? Ready for your interview for ${interviewInfo?.interviewData?.jobPosition}?`,
-      transcriber: {
-        provider: "deepgram",
-        model: "nova-2",
-        language: "en-US",
-      },
-      voice: {
-        provider: "playht",
-        voiceId: "jennifer",
-      },
-      model: {
-        provider: "openai",
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content:
-              `You are an AI voice assistant conducting interviews. Your job is to ask candidates provided interview questions , assess their responses. Begin the conversation with a friendly introduction,setting a relaxed yet professional tone. "Hey there! Welcome to your ${interviewInfo?.interviewData?.jobPosition} interview.Let's get started with a few questions". Ask one question at a time and wait for the candidate's response before proceeding.Keep the flow of questions randomly frm Questions:${questionList} If the candidate struggles , offer hints or rephrase the questions without giving away the answers in such a way that "Need a hint? " Provide brief , encouraging feedback after each answer. Example:"Nice! That's a solid answer." "Hmm , not quite! Want to try again?" Keep the conversation natural and engaging use casual phrases like "Alright , next up..." or "Keep going , you are doing great" After 5-7 questions , wrap up the interview smoothly by summarizing their performance.Example :"That was great! You handled some tough questions well.Keep sharpening your skills!" End on a positive note:"Thanks for chatting!Hope to see you crushing projects soon!" Key Guidlines: Be friendly,engaging and witty 
-            . Keep responses short and natural , like a real conversation . Ensure the interview remain focused on ${interviewInfo?.interviewData?.jobPosition}`.trim(),
-          },
-        ],
-      },
+      assistant: {
+        transcriber: {
+          provider: "deepgram",
+          model: "nova-2",
+          language: "en-US"
+        },
+        voice: {
+          provider: "playht",
+          voiceId: "jennifer"
+        },
+        model: {
+          provider: "openai",
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant."
+            }
+          ]
+        },
+        firstMessage: `Hi ${interviewInfo?.userName}, ready for your ${interviewInfo?.interviewData?.jobPosition} interview?`
+      }
     };
+    
 
-    vapi.start(assistantOptions);
+    console.log("Assistant Options:", assistantOptions);
+
+    try {
+      const call = await vapi.start(assistantOptions);
+      if (!call) {
+        console.error("❌ Failed to start call: returned null");
+        toast.error("Interview could not start. Please check your API key or config.");
+        return;
+      }
+      console.log("✅ Call started successfully:", call);
+    } catch (err) {
+      console.error("❌ Error while starting call:", err);
+      toast.error("Failed to start call. Check your configuration and API key.");
+    }
   };
 
   const stopInterview = () => {
     vapi.stop();
-    router.push("/create-interview");
+    setCallEnd(true);
+    GenerateFeedback();
   };
 
   vapi.on("call-start", () => {
-    console.log("Call has started.");
-    toast("Call Connected...");
+    console.log("📞 Call has started.");
+    toast.success("Call Connected...");
   });
 
   vapi.on("speech-start", () => {
-    console.log("Assistant speech has started.");
+    console.log("🗣️ Assistant speech started.");
     setActiveUser(false);
   });
 
   vapi.on("speech-end", () => {
-    console.log("Assistant speech has ended.");
+    console.log("🎤 Assistant speech ended.");
     setActiveUser(true);
   });
 
   vapi.on("call-end", () => {
-    console.log("Call has ended.");
+    console.log("📴 Call has ended.");
     toast("Interview Ended");
     GenerateFeedback();
   });
 
+  vapi.on("error", (err) => {
+    console.error("🚨 Vapi runtime error:", err);
+    toast.error("A runtime error occurred during the interview.");
+  });
+
   vapi.on("message", (message) => {
-    console.log(message?.conversation);
-    setConversation(message?.conversation);
+    try {
+      const json = JSON.parse(message);
+      setConversation(json);
+    } catch (err) {
+      console.log("Failed to parse conversation message:", err);
+    }
   });
 
   const GenerateFeedback = async () => {
     setLoading(true);
-
     try {
       const result = await axios.post("/api/ai-feedback", {
         conversation: conversation,
       });
 
       const content = result.data.content || "";
-      const FINAL_CONTENT = content
-        .replace("```json", "")
-        .replace("```", "")
-        .trim();
-      const feedbackJson = JSON.parse(FINAL_CONTENT);
+      const parsed = content.replace("```json", "").replace("```", "").trim();
+      const feedbackJson = JSON.parse(parsed);
 
       const { data, error } = await supabase
         .from("interview-feedback")
@@ -120,62 +137,16 @@ function StartInterview() {
           },
         ])
         .select();
-      console.log(data);
 
-      router.replace('/interview'+interview_id+'/completed');
+      console.log("✅ Feedback saved:", data);
+      router.replace("/interview/" + interview_id + "/completed");
     } catch (error) {
-      console.error("Feedback generation error:", error);
-      toast.error("Error generating or saving feedback.");
+      console.error("❌ Feedback generation error:", error);
+      toast.error("Failed to generate or save feedback.");
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const handleMessage = (message) => {
-      if (message?.conversation) {
-        setConversation(message.conversation);
-      }
-    };
-
-    const handleCallStart = () => {
-      console.log("Call has started.");
-      toast("Call Connected...");
-    };
-
-    const handleSpeechStart = () => {
-      console.log("Assistant speech started.");
-      setActiveUser(false);
-    };
-
-    const handleSpeechEnd = () => {
-      console.log("Assistant speech ended.");
-      setActiveUser(true);
-    };
-
-    const handleCallEnd = () => {
-      console.log("Call has ended.");
-      toast("Interview Ended");
-
-      if (conversation) {
-        GenerateFeedback();
-      }
-    };
-
-    vapi.on("message", handleMessage);
-    vapi.on("call-start", handleCallStart);
-    vapi.on("speech-start", handleSpeechStart);
-    vapi.on("speech-end", handleSpeechEnd);
-    vapi.on("call-end", handleCallEnd);
-
-    return () => {
-      vapi.off("message", handleMessage);
-      vapi.off("call-start", handleCallStart);
-      vapi.off("speech-start", handleSpeechStart);
-      vapi.off("speech-end", handleSpeechEnd);
-      vapi.off("call-end", handleCallEnd);
-    };
-  }, [conversation, vapi]);
 
   return (
     <div className="p-20 lg:px-48 xl:px-56">
@@ -214,12 +185,14 @@ function StartInterview() {
 
       <div className="flex items-center gap-5 justify-center mt-7">
         <Mic className="h-10 w-10 p-3 bg-gray-400 rounded-full cursor-pointer" />
-        {/* <AlertConfirmation stopInterview={() => stopInterview()}> */}
-          {!loading ? <Phone
+        {!loading ? (
+          <Phone
             className="h-12 w-12 p-3 bg-red-500 text-white rounded-full cursor-pointer"
-            onClick={() => stopInterview()}
-          />:<LoaderIcon className="animate-spin"/>}
-        {/* </AlertConfirmation> */}
+            onClick={stopInterview}
+          />
+        ) : (
+          <LoaderIcon className="animate-spin" />
+        )}
       </div>
 
       <h2 className="text-center font-light my-4">Interview is going ON!</h2>

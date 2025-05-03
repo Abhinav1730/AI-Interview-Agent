@@ -63,7 +63,7 @@ export const InterviewType = [
 ];
 
 export const QUESTION_PROMPT =
-  'You are an expert technical interview. Based on the following inputs, generate a well-structured list of high-quality interview questions: Job Title:{{jobTitle}} Job Description:{{jobDescription}} Interview Duration:{{duaration}} Interview Type:{{type}} Your task: Analyze the job description to identify the key responsibilities,required skills,and expected experience. Generate a list of interview questions depends on interview duration Adjust the number and depth of questions to match the interview duration. Ensure the questions match the tone and structure of a real-life {{type}} interview. Format your response in JSON format with array list of questions. format:interviewQuestions=[ { question:"", type:"Technical/Behavioral/Experience/Problem Solving/Leadership"},{ ... }] The goal is to create a structured,relevant,and time-optimized interview plan for a {{jobTitle}} role';
+  'You are an expert technical interview. based on the following inputs, generate a well-structured list of high-quality interview questions: Job Title:{{jobTitle}} Job Description:{{jobDescription}} Interview Duration:{{duaration}} Interview Type:{{type}} Your task: Analyze the job description to identify the key responsibilities,required skills,and expected experience. Generate a list of interview questions depends on interview duration Adjust the number and depth of questions to match the interview duration. Ensure the questions match the tone and structure of a real-life {{type}} interview. IMPORTANT - Only return valid JSON and Format your response in JSON format with array list of questions , Format must match this exactly. format:interviewQuestions=[ { question:"", type:"Technical/Behavioral/Experience/Problem Solving/Leadership"},{ ... }] The goal is to create a structured,relevant,and time-optimized interview plan for a {{jobTitle}} role. Important: Return only a valid JSON object. Do not include any text before or after the JSON.';
 
 export const FEEDBACK_PROMPT = `
   {{conversation}}
@@ -79,4 +79,5 @@ export const FEEDBACK_PROMPT = `
   Recommandation:",
   RecommandationMsg:"
   }
-  }`;
+  }.
+  Important: Return only a valid JSON object. Do not include any text before or after the JSON.`;
